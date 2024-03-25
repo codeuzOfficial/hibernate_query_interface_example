@@ -13,9 +13,11 @@ import java.util.List;
 
 public class Main {
     public static void main(String[] args) {
+//        updateStudent(5, "Toshmat");
 //        insertStudents();
 //        selectExample();
-        pagination();
+//        pagination();
+        selectById(41);
     }
 
     private static void selectExample() {
@@ -25,15 +27,58 @@ public class Main {
         SessionFactory factory = meta.getSessionFactoryBuilder().build();
         Session session = factory.openSession();
 
-        String sql = "from StudentEntity s where age > :studentAge ";
-        Query<StudentEntity> query = session.createQuery(sql);
-        query.setParameter("studentAge", 22);
+        String sql = "from StudentEntity s";
+        Query query = session.createQuery(sql);
+//        query.setMaxResults(3); // limit 3
+        query.setFirstResult(2); // offset 2
+
         List<StudentEntity> studentList = query.list();
 
         for (StudentEntity entity : studentList) {
             System.out.println(entity);
         }
 
+        factory.close();
+        session.close();
+    }
+
+    private static void selectById(Integer id) {
+        StandardServiceRegistry ssr = new StandardServiceRegistryBuilder().configure("hibernate.cfg.xml").build();
+        Metadata meta = new MetadataSources(ssr).getMetadataBuilder().build();
+
+        SessionFactory factory = meta.getSessionFactoryBuilder().build();
+        Session session = factory.openSession();
+
+        String sql = "from StudentEntity where id=:id";
+        Query query = session.createQuery(sql);
+        query.setParameter("id", id);
+
+        StudentEntity student = (StudentEntity) query.uniqueResult();
+
+        System.out.println(student);
+
+        factory.close();
+        session.close();
+    }
+
+    private static void updateStudent(Integer id, String name) {
+        StandardServiceRegistry ssr = new StandardServiceRegistryBuilder().configure("hibernate.cfg.xml").build();
+        Metadata meta = new MetadataSources(ssr).getMetadataBuilder().build();
+
+        SessionFactory factory = meta.getSessionFactoryBuilder().build();
+        Session session = factory.openSession();
+        Transaction transaction = session.beginTransaction();
+
+        String sql = "Update StudentEntity s set s.name =?1 where id =?2";
+        Query query = session.createQuery(sql);
+
+        query.setParameter(1, name);
+        query.setParameter(2, id);
+
+        int result = query.executeUpdate();
+        System.out.println(result);
+
+        transaction.commit();
         factory.close();
         session.close();
     }
